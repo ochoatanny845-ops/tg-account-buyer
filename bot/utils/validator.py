@@ -66,7 +66,11 @@ async def send_code_request(phone: str, session_file: str):
     发送验证码请求
     返回: (success, phone_code_hash, error_msg)
     """
+    import logging
+    logger = logging.getLogger(__name__)
+    
     try:
+        logger.info(f"正在发送验证码到: {phone}")
         client = TelegramClient(session_file, Config.API_ID, Config.API_HASH)
         await client.connect()
         
@@ -74,10 +78,13 @@ async def send_code_request(phone: str, session_file: str):
         sent_code = await client.send_code_request(phone)
         phone_code_hash = sent_code.phone_code_hash
         
+        logger.info(f"验证码发送成功: {phone}, hash: {phone_code_hash[:10]}...")
+        
         await client.disconnect()
         return True, phone_code_hash, None
         
     except Exception as e:
+        logger.error(f"发送验证码失败: {phone}, 错误: {str(e)}")
         return False, None, f"发送验证码失败: {str(e)}"
 
 
