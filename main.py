@@ -3,6 +3,7 @@
 """
 Telegram 账号收购机器人 - 主程序
 """
+import sys
 import logging
 import os
 from telegram import Update
@@ -32,14 +33,19 @@ from bot.handlers.admin import (
 # 配置日志
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO,  # 强制设置为 INFO
-    force=True  # 强制重新配置
+    level=logging.INFO,
+    force=True,
+    stream=sys.stdout  # 强制输出到标准输出
 )
+
+# 禁用输出缓冲
+import sys
+sys.stdout.reconfigure(line_buffering=True)
 
 # 确保所有相关模块的日志都是 INFO 级别
 logging.getLogger('bot.handlers.user').setLevel(logging.INFO)
 logging.getLogger('bot.utils.validator').setLevel(logging.INFO)
-logging.getLogger('httpx').setLevel(logging.WARNING)  # httpx 太吵，降低级别
+logging.getLogger('httpx').setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
