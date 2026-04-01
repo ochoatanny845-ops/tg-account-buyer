@@ -18,11 +18,11 @@ from telegram.ext import (
 from bot.config import Config
 from bot.handlers.user import (
     start, view_prices, my_balance,
-    start_login, receive_phone, receive_code,
+    start_login, receive_phone, receive_code, receive_password,
     start_upload_session, receive_session_file,
-    start_withdrawal, receive_trc20, receive_amount,
+    start_withdrawal, set_trc20_address, receive_trc20, receive_amount,
     cancel,
-    WAITING_PHONE, WAITING_CODE, WAITING_SESSION_FILE, WAITING_TRC20, WAITING_AMOUNT
+    WAITING_PHONE, WAITING_CODE, WAITING_PASSWORD, WAITING_SESSION_FILE, WAITING_TRC20, WAITING_AMOUNT
 )
 from bot.handlers.admin import (
     admin_prices, admin_setprice,
@@ -89,6 +89,7 @@ def main():
         states={
             WAITING_PHONE: [MessageHandler(filters.TEXT & ~filters.COMMAND, receive_phone)],
             WAITING_CODE: [MessageHandler(filters.TEXT & ~filters.COMMAND, receive_code)],
+            WAITING_PASSWORD: [MessageHandler(filters.TEXT & ~filters.COMMAND, receive_password)],
         },
         fallbacks=[
             CommandHandler("cancel", cancel),
@@ -116,6 +117,23 @@ def main():
         ],
     )
     application.add_handler(upload_conv_handler)
+    
+    # ===================
+    # 设置 TRC20 地址会话处理器
+    # ===================
+    trc20_conv_handler = ConversationHandler(
+        entry_points=[
+            MessageHandler(filters.Regex("^⚙️ 设置地址$"), set_trc20_address)
+        ],
+        states={
+            WAITING_TRC20: [MessageHandler(filters.TEXT & ~filters.COMMAND, receive_trc20)],
+        },
+        fallbacks=[
+            CommandHandler("cancel", cancel),
+            MessageHandler(filters.Regex("^❌ 取消$"), cancel)
+        ],
+    )
+    application.add_handler(trc20_conv_handler)
     
     # ===================
     # 提现会话处理器

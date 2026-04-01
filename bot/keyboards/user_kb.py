@@ -11,7 +11,7 @@ def main_menu_keyboard():
     keyboard = [
         ["💰 查看价格", "💵 我的余额"],
         ["📱 接码登录", "📤 上传 Session"],
-        ["💸 申请提现", "📊 我的记录"],
+        ["💸 申请提现", "⚙️ 设置地址"],
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
