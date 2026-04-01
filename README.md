@@ -71,6 +71,26 @@ DEFAULT_PRICE=0.2  # 默认价格 (USDT)
 python main.py
 ```
 
+## 代码质量检查
+
+在提交代码前，建议运行代码质量检查：
+
+### Windows
+```cmd
+pre-commit-check.bat
+```
+
+### Linux/Mac
+```bash
+python check_code.py
+```
+
+这将检查：
+- ✅ 语法错误
+- ✅ 重复定义的函数
+- ✅ 已删除函数的调用
+- ✅ 导入错误
+
 ## 项目结构
 
 ```
