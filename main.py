@@ -32,8 +32,15 @@ from bot.handlers.admin import (
 # 配置日志
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=getattr(logging, Config.LOG_LEVEL)
+    level=logging.INFO,  # 强制设置为 INFO
+    force=True  # 强制重新配置
 )
+
+# 确保所有相关模块的日志都是 INFO 级别
+logging.getLogger('bot.handlers.user').setLevel(logging.INFO)
+logging.getLogger('bot.utils.validator').setLevel(logging.INFO)
+logging.getLogger('httpx').setLevel(logging.WARNING)  # httpx 太吵，降低级别
+
 logger = logging.getLogger(__name__)
 
 
