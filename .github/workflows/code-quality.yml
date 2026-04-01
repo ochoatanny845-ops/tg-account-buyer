@@ -1,0 +1,44 @@
+name: 代码质量检查
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: 检查语法
+      run: |
+        python -m py_compile main.py
+        python -m py_compile bot/*.py
+        python -m py_compile bot/handlers/*.py
+        python -m py_compile bot/utils/*.py
+        python -m py_compile bot/keyboards/*.py
+    
+    - name: 运行代码质量检查
+      run: |
+        python check_code.py
+    
+    - name: 检查是否有未定义的函数调用
+      run: |
+        if grep -r "login_with_code" --include="*.py" .; then
+          echo "❌ 发现已删除的函数 login_with_code 的调用"
+          exit 1
+        fi
+        echo "✅ 没有调用已删除的函数"
