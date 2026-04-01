@@ -140,14 +140,23 @@ async def receive_phone(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return ConversationHandler.END
     
+    # 清理手机号格式（移除空格、横线等）
+    phone_cleaned = phone.replace(' ', '').replace('-', '').replace('(', '').replace(')', '')
+    
+    # 确保以 + 开头
+    if not phone_cleaned.startswith('+'):
+        phone_cleaned = '+' + phone_cleaned
+    
+    logger.info(f"用户输入手机号: {phone} -> 清理后: {phone_cleaned}")
+    
     # 保存手机号
-    context.user_data['phone'] = phone
-    context.user_data['session_file'] = generate_session_filename(phone)
+    context.user_data['phone'] = phone_cleaned
+    context.user_data['session_file'] = generate_session_filename(phone_cleaned)
     
     await update.message.reply_text("⏳ 正在发送验证码...")
     
     # 发送验证码
-    success, phone_code_hash, error = await send_code_request(phone, context.user_data['session_file'])
+    success, phone_code_hash, error = await send_code_request(phone_cleaned, context.user_data['session_file'])
     
     if not success:
         await update.message.reply_text(
@@ -160,7 +169,7 @@ async def receive_phone(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['phone_code_hash'] = phone_code_hash
     
     await update.message.reply_text(
-        f"📲 验证码已发送到 <code>{phone}</code>\n\n"
+        f"📲 验证码已发送到 <code>{phone_cleaned}</code>\n\n"
         f"请输入收到的验证码：",
         parse_mode='HTML'
     )
