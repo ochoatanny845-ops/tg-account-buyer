@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 用户功能处理器
@@ -16,9 +16,8 @@ from bot.keyboards.user_kb import main_menu_keyboard, cancel_keyboard, withdrawa
 from bot.keyboards.admin_kb import session_review_keyboard
 from bot.utils.validator import (
     validate_session, 
-    send_code_request, 
-    sign_in_with_code, 
-    sign_in_with_password, 
+    login_with_code,
+    login_with_password,
     generate_session_filename
 )
 from bot.utils.country import get_country_info, format_price_list
@@ -153,24 +152,8 @@ async def receive_phone(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['phone'] = phone_cleaned
     context.user_data['session_file'] = generate_session_filename(phone_cleaned)
     
-    await update.message.reply_text("⏳ 正在发送验证码...")
-    
-    # 发送验证码
-    success, phone_code_hash, error = await send_code_request(phone_cleaned, context.user_data['session_file'])
-    
-    if not success:
-        await update.message.reply_text(
-            f"❌ {error}\n\n"
-            f"请检查手机号格式或重试",
-            reply_markup=main_menu_keyboard()
-        )
-        return ConversationHandler.END
-    
-    context.user_data['phone_code_hash'] = phone_code_hash
-    
     await update.message.reply_text(
-        f"📲 验证码已发送到 <code>{phone_cleaned}</code>\n\n"
-        f"请输入收到的验证码：",
+        f"📱 请输入手机号 <code>{phone_cleaned}</code> 收到的验证码：",
         parse_mode='HTML'
     )
     return WAITING_CODE
@@ -193,9 +176,7 @@ async def receive_code(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("⏳ 正在验证...")
     
     # 尝试使用验证码登录
-    success, needs_password, error = await sign_in_with_code(
-        phone, code, phone_code_hash, session_file
-    )
+    success, needs_password, error = await login_with_code(phone, code, session_file)
     
     if success:
         # 登录成功，不需要密码（账号未开启 2FA）
@@ -234,9 +215,10 @@ async def receive_code(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def receive_password(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """接收 2FA 密码"""
     password = update.message.text.strip()
+    phone = context.user_data.get('phone')
     session_file = context.user_data.get('session_file')
     
-    if not session_file:
+    if not phone or not session_file:
         await update.message.reply_text(
             "❌ 会话已过期，请重新开始",
             reply_markup=main_menu_keyboard()
@@ -246,7 +228,7 @@ async def receive_password(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("⏳ 正在验证 2FA 密码...")
     
     # 使用密码登录
-    success, phone, country_code, error = await sign_in_with_password(password, session_file)
+    success, error = await login_with_password(phone, password, session_file)
     
     if not success:
         await update.message.reply_text(
