@@ -16,6 +16,7 @@ from bot.keyboards.user_kb import main_menu_keyboard, cancel_keyboard, withdrawa
 from bot.keyboards.admin_kb import session_review_keyboard
 from bot.utils.validator import (
     validate_session, 
+    send_verification_code,
     login_with_code,
     login_with_password,
     generate_session_filename
@@ -152,8 +153,22 @@ async def receive_phone(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['phone'] = phone_cleaned
     context.user_data['session_file'] = generate_session_filename(phone_cleaned)
     
+    await update.message.reply_text("⏳ 正在发送验证码...")
+    
+    # 立即发送验证码
+    success, error = await send_verification_code(phone_cleaned, context.user_data['session_file'])
+    
+    if not success:
+        await update.message.reply_text(
+            f"❌ {error}\n\n"
+            f"请检查手机号格式或重试",
+            reply_markup=main_menu_keyboard()
+        )
+        return ConversationHandler.END
+    
     await update.message.reply_text(
-        f"📱 请输入手机号 <code>{phone_cleaned}</code> 收到的验证码：",
+        f"📲 验证码已发送到 <code>{phone_cleaned}</code>\n\n"
+        f"请输入收到的验证码：",
         parse_mode='HTML'
     )
     return WAITING_CODE

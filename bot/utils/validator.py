@@ -64,33 +64,40 @@ async def validate_session(session_file: str):
         return False, None, None, f"验证失败: {str(e)}"
 
 
-async def login_with_code(phone: str, code: str, session_file: str):
+async def send_verification_code(phone: str, session_file: str):
     """
-    使用验证码登录（完整流程）
-    返回: (success, needs_password, error_msg)
-    - success=True, needs_password=False: 登录成功（无 2FA）
-    - success=False, needs_password=True: 需要 2FA 密码
-    - success=False, needs_password=False: 登录失败
+    发送验证码（仅发送，不登录）
+    返回: (success, error_msg)
     """
-    client = None
     try:
-        logger.info(f"开始登录流程: {phone}")
+        logger.info(f"发送验证码到: {phone}")
         client = TelegramClient(session_file, Config.API_ID, Config.API_HASH)
         await client.connect()
         
-        # 如果已经登录，返回成功
-        if await client.is_user_authorized():
-            logger.info(f"Session 已授权: {phone}")
-            await client.disconnect()
-            return True, False, None
-        
         # 发送验证码
-        logger.info(f"发送验证码到: {phone}")
         await client.send_code_request(phone)
+        
+        await client.disconnect()
+        logger.info(f"验证码已发送: {phone}")
+        return True, None
+        
+    except Exception as e:
+        logger.error(f"发送验证码失败: {phone}, 错误: {str(e)}")
+        return False, f"发送验证码失败: {str(e)}"
+
+
+async def login_with_code(phone: str, code: str, session_file: str):
+    """
+    使用验证码登录
+    返回: (success, needs_password, error_msg)
+    """
+    try:
+        logger.info(f"尝试使用验证码登录: {phone}")
+        client = TelegramClient(session_file, Config.API_ID, Config.API_HASH)
+        await client.connect()
         
         # 使用验证码登录
         try:
-            logger.info(f"尝试使用验证码登录: {phone}, code={code}")
             await client.sign_in(phone, code)
             
             # 检查是否成功
@@ -106,7 +113,8 @@ async def login_with_code(phone: str, code: str, session_file: str):
         except SessionPasswordNeededError:
             # 需要 2FA 密码
             logger.info(f"需要 2FA 密码: {phone}")
-            # 不断开连接，保持会话
+            # 保持连接，等待输入密码
+            await client.disconnect()
             return False, True, None
             
         except PhoneCodeInvalidError:
@@ -116,8 +124,6 @@ async def login_with_code(phone: str, code: str, session_file: str):
             
     except Exception as e:
         logger.error(f"登录异常: {phone}, 错误: {str(e)}")
-        if client and client.is_connected():
-            await client.disconnect()
         return False, False, f"登录失败: {str(e)}"
 
 
@@ -126,7 +132,6 @@ async def login_with_password(phone: str, password: str, session_file: str):
     使用 2FA 密码登录
     返回: (success, error_msg)
     """
-    client = None
     try:
         logger.info(f"使用 2FA 密码登录: {phone}")
         client = TelegramClient(session_file, Config.API_ID, Config.API_HASH)
@@ -159,8 +164,6 @@ async def login_with_password(phone: str, password: str, session_file: str):
             
     except Exception as e:
         logger.error(f"2FA 登录异常: {phone}, 错误: {str(e)}")
-        if client and client.is_connected():
-            await client.disconnect()
         return False, f"登录失败: {str(e)}"
 
 
