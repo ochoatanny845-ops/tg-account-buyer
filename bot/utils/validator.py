@@ -6,6 +6,7 @@ Session 验证工具
 import os
 from telethon import TelegramClient
 from telethon.errors import SessionPasswordNeededError
+from telethon.tl.functions.account import GetPasswordRequest
 from bot.config import Config
 from bot.utils.country import parse_phone_country_code
 
@@ -40,21 +41,8 @@ async def validate_session(session_file: str):
             await client.disconnect()
             return False, phone, None, "无法识别国家区号"
         
-        # 检查 2FA
-        try:
-            # 尝试获取完整的用户信息（需要密码才能访问某些信息）
-            full = await client(GetFullUserRequest('me'))
-        except SessionPasswordNeededError:
-            # 需要密码，说明开启了 2FA
-            await client.disconnect()
-            return True, phone, country_code, None
-        except Exception:
-            pass
-        
         # 检查账号是否设置了密码（2FA）
-        # 通过检查 account.getPassword 来验证
         try:
-            from telethon.tl.functions.account import GetPasswordRequest
             password_info = await client(GetPasswordRequest())
             has_2fa = password_info.has_password
         except Exception as e:
@@ -73,41 +61,82 @@ async def validate_session(session_file: str):
         return False, None, None, f"验证失败: {str(e)}"
 
 
-async def login_with_code(phone: str, code: str, session_file: str):
+async def send_code_request(phone: str, session_file: str):
     """
-    使用验证码登录
-    返回: (success, error_msg)
+    发送验证码请求
+    返回: (success, phone_code_hash, error_msg)
     """
     try:
         client = TelegramClient(session_file, Config.API_ID, Config.API_HASH)
         await client.connect()
         
-        # 如果已经登录，返回成功
-        if await client.is_user_authorized():
-            await client.disconnect()
-            return True, None
-        
         # 发送验证码
-        await client.send_code_request(phone)
+        sent_code = await client.send_code_request(phone)
+        phone_code_hash = sent_code.phone_code_hash
         
-        # 使用验证码登录
+        await client.disconnect()
+        return True, phone_code_hash, None
+        
+    except Exception as e:
+        return False, None, f"发送验证码失败: {str(e)}"
+
+
+async def sign_in_with_code(phone: str, code: str, phone_code_hash: str, session_file: str):
+    """
+    使用验证码登录（第一步）
+    返回: (success, needs_password, error_msg)
+    """
+    try:
+        client = TelegramClient(session_file, Config.API_ID, Config.API_HASH)
+        await client.connect()
+        
         try:
-            await client.sign_in(phone, code)
+            await client.sign_in(phone, code, phone_code_hash=phone_code_hash)
+            # 登录成功，不需要密码
+            await client.disconnect()
+            return True, False, None
         except SessionPasswordNeededError:
             # 需要 2FA 密码
             await client.disconnect()
-            return False, "需要 2FA 密码，请使用已登录的 Session 文件上传"
-        
-        # 检查是否成功
-        if await client.is_user_authorized():
+            return False, True, None
+        except Exception as e:
             await client.disconnect()
-            return True, None
-        else:
-            await client.disconnect()
-            return False, "登录失败"
+            return False, False, f"验证码错误: {str(e)}"
         
     except Exception as e:
-        return False, f"登录失败: {str(e)}"
+        return False, False, f"登录失败: {str(e)}"
+
+
+async def sign_in_with_password(password: str, session_file: str):
+    """
+    使用 2FA 密码登录（第二步）
+    返回: (success, phone, country_code, error_msg)
+    """
+    try:
+        client = TelegramClient(session_file, Config.API_ID, Config.API_HASH)
+        await client.connect()
+        
+        try:
+            await client.sign_in(password=password)
+        except Exception as e:
+            await client.disconnect()
+            return False, None, None, f"2FA 密码错误: {str(e)}"
+        
+        # 检查是否成功
+        if not await client.is_user_authorized():
+            await client.disconnect()
+            return False, None, None, "登录失败"
+        
+        # 获取用户信息
+        me = await client.get_me()
+        phone = me.phone
+        country_code = parse_phone_country_code(phone)
+        
+        await client.disconnect()
+        return True, phone, country_code, None
+        
+    except Exception as e:
+        return False, None, None, f"登录失败: {str(e)}"
 
 
 def generate_session_filename(phone: str):
@@ -122,3 +151,4 @@ def generate_session_filename(phone: str):
     
     filename = f"{clean_phone}.session"
     return os.path.join(Config.SESSION_DIR, filename)
+

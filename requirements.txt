@@ -6,3 +6,4 @@ telethon==1.37.0
 cryptography==44.0.0
 pycountry==24.6.1
 tgcrypto-pyrofork==1.2.8
+rarfile==4.2
