@@ -48,14 +48,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 • 已开启 2FA 的 Telegram 账号
 • 支持全球各国家/地区账号
 
-💰 <b>快速开始：</b>
-1. 点击"💰 查看价格"查看收购价格
-2. 点击"📱 接码登录"或"📤 上传 Session"提交账号
+<emoji id="5377505475015235101">💰</emoji> <b>快速开始：</b>
+1. 点击"<emoji id="5377505475015235101">💰</emoji> 查看价格"查看收购价格
+2. 点击"<emoji id="5332724926216428039">📱</emoji> 接码登录"或"<emoji id="5449683594425410231">📤</emoji> 上传 Session"提交账号
 3. 等待管理员审核（通常 1-24 小时）
 4. 审核通过后余额自动到账
 5. 达到提现金额即可申请提现
 
-📝 <b>提现说明：</b>
+<emoji id="5395444784611480792">📝</emoji> <b>提现说明：</b>
 • 最低提现：{Config.MIN_WITHDRAWAL} USDT
 • 手续费：{Config.WITHDRAWAL_FEE} USDT
 • 支付方式：TRC20
@@ -102,14 +102,14 @@ async def my_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     text = f"""
-💵 <b>我的余额</b>
+<emoji id="5197434882321567830">💵</emoji> <b>我的余额</b>
 
 当前余额：<b>{user.balance:.2f} USDT</b>
 TRC20 地址：<code>{user.trc20_address or '未设置'}</code>
 
-{'✅ 可以提现' if user.balance >= Config.MIN_WITHDRAWAL else f'❌ 余额不足（最低 {Config.MIN_WITHDRAWAL} USDT）'}
+{'<emoji id="5461117441612462242">✅</emoji> 可以提现' if user.balance >= Config.MIN_WITHDRAWAL else f'<emoji id="5210952531676504517">❌</emoji> 余额不足（最低 {Config.MIN_WITHDRAWAL} USDT）'}
 
-💡 使用"⚙️ 设置地址"按钮可以修改 TRC20 地址
+💡 使用"<emoji id="5341715473882955310">⚙️</emoji> 设置地址"按钮可以修改 TRC20 地址
 """
     
     await update.message.reply_text(text, parse_mode='HTML')
@@ -389,14 +389,14 @@ async def receive_session_file(update: Update, context: ContextTypes.DEFAULT_TYP
     
     # 显示统计
     await update.message.reply_text(f"""
-✅ 解压完成
+<emoji id="5461117441612462242">✅</emoji> 解压完成
 
-📊 统计信息：
+<emoji id="5231200819986047254">📊</emoji> 统计信息：
 • 账号数量：{account_count} 个
 • 已配置密码：{matched_passwords} 个
 
-⏳ 正在验证并提交...
-""")
+<emoji id="5451882707875276247">⏳</emoji> 正在验证并提交...
+""", parse_mode='HTML')
     
     # 验证所有 Session 并收集信息
     user_id = update.effective_user.id
@@ -456,15 +456,15 @@ async def receive_session_file(update: Update, context: ContextTypes.DEFAULT_TYP
     
     # 通知用户
     await update.message.reply_text(f"""
-✅ 提交完成
+<emoji id="5461117441612462242">✅</emoji> 提交完成
 
-📊 处理结果：
+<emoji id="5231200819986047254">📊</emoji> 处理结果：
 • 成功：{valid_count} 个
 • 失败：{account_count - valid_count} 个
 • 总金额：{total_price} USDT
 
 管理员正在审核中，请耐心等待...
-""", reply_markup=main_menu_keyboard())
+""", parse_mode='HTML', reply_markup=main_menu_keyboard())
     
     # 发送一次通知给管理员（包含所有账号）
     if valid_sessions:
@@ -575,8 +575,8 @@ async def notify_admin_batch_sessions(context, user_id, sessions, archive_path):
 🆕 <b>新的批量 Session 待审核</b>
 
 👤 提交用户：<code>{user_id}</code>
-📊 账号数量：{len(sessions)} 个
-💰 总金额：<b>{total_price} USDT</b>
+<emoji id="5231200819986047254">📊</emoji> 账号数量：{len(sessions)} 个
+<emoji id="5377505475015235101">💰</emoji> 总金额：<b>{total_price} USDT</b>
 
 📋 <b>账号列表：</b>
 {''.join(account_list)}
@@ -633,7 +633,7 @@ async def notify_admin_new_session(context: ContextTypes.DEFAULT_TYPE, session_i
 • 提交用户: <code>{user_id}</code>
 • 手机号: <code>{phone}</code>
 • {flag_emoji} 国家: {country_name} <code>{country_code}</code>
-• 💰 收购价: <b>{price} USDT</b>
+• <emoji id="5377505475015235101">💰</emoji> 收购价: <b>{price} USDT</b>
 
 📄 Session 文件: <code>{session_file}</code>
 """
@@ -796,7 +796,7 @@ async def receive_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     # 显示确认信息
     text = f"""
-💸 <b>提现确认</b>
+<emoji id="5233326571099534068">💸</emoji> <b>提现确认</b>
 
 提现金额：<b>{amount} USDT</b>
 手续费：<b>{Config.WITHDRAWAL_FEE} USDT</b>
@@ -806,7 +806,7 @@ async def receive_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
 TRC20 地址：
 <code>{user.trc20_address}</code>
 
-⚠️ 请仔细核对地址，确认无误后点击下方按钮
+<emoji id="5447644880824181073">⚠️</emoji> 请仔细核对地址，确认无误后点击下方按钮
 """
     
     keyboard = withdrawal_confirm_keyboard(amount, Config.WITHDRAWAL_FEE)
@@ -844,14 +844,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 • 已开启 2FA 的 Telegram 账号
 • 支持全球各国家/地区账号
 
-💰 <b>快速开始：</b>
-1. 点击"💰 查看价格"查看收购价格
-2. 点击"📱 接码登录"或"📤 上传 Session"提交账号
+<emoji id="5377505475015235101">💰</emoji> <b>快速开始：</b>
+1. 点击"<emoji id="5377505475015235101">💰</emoji> 查看价格"查看收购价格
+2. 点击"<emoji id="5332724926216428039">📱</emoji> 接码登录"或"<emoji id="5449683594425410231">📤</emoji> 上传 Session"提交账号
 3. 等待管理员审核（通常 1-24 小时）
 4. 审核通过后余额自动到账
 5. 达到提现金额即可申请提现
 
-📝 <b>提现说明：</b>
+<emoji id="5395444784611480792">📝</emoji> <b>提现说明：</b>
 • 最低提现：{Config.MIN_WITHDRAWAL} USDT
 • 手续费：{Config.WITHDRAWAL_FEE} USDT
 • 支付方式：TRC20
@@ -898,12 +898,12 @@ async def my_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     text = f"""
-💵 <b>我的余额</b>
+<emoji id="5197434882321567830">💵</emoji> <b>我的余额</b>
 
 当前余额：<b>{user.balance:.2f} USDT</b>
 TRC20 地址：<code>{user.trc20_address or '未设置'}</code>
 
-{'✅ 可以提现' if user.balance >= Config.MIN_WITHDRAWAL else f'❌ 余额不足（最低 {Config.MIN_WITHDRAWAL} USDT）'}
+{'<emoji id="5461117441612462242">✅</emoji> 可以提现' if user.balance >= Config.MIN_WITHDRAWAL else f'<emoji id="5210952531676504517">❌</emoji> 余额不足（最低 {Config.MIN_WITHDRAWAL} USDT）'}
 """
     
     await update.message.reply_text(text, parse_mode='HTML')
