@@ -401,15 +401,26 @@ async def process_session(update: Update, context: ContextTypes.DEFAULT_TYPE,
     try:
         if os.path.exists(final_session_file):
             os.remove(final_session_file)
-        # 复制文件（而不是移动），因为可能跨驱动器
+            if os.path.exists(final_session_file + '-journal'):
+                os.remove(final_session_file + '-journal')
+        
+        # 使用 shutil.move 移动文件
         import shutil
-        shutil.copy2(session_file, final_session_file)
-        # 同时复制 journal 文件（如果存在）
+        shutil.move(session_file, final_session_file)
+        logger.info(f"Session 文件已移动: {final_session_file}")
+        
+        # 同时移动 journal 文件（如果存在）
         if os.path.exists(session_file + '-journal'):
-            shutil.copy2(session_file + '-journal', final_session_file + '-journal')
+            shutil.move(session_file + '-journal', final_session_file + '-journal')
+            
     except Exception as e:
-        logger.error(f"复制 Session 文件失败: {e}")
-        final_session_file = session_file
+        logger.error(f"移动 Session 文件失败: {e}")
+        # 如果移动失败，检查原文件是否仍然存在
+        if os.path.exists(session_file):
+            final_session_file = session_file
+            logger.info(f"使用原始 Session 文件: {session_file}")
+        else:
+            logger.error(f"Session 文件丢失: {session_file}")
     
     # 创建 Session 记录
     session_id = db.create_session_record(
