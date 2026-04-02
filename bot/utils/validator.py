@@ -67,7 +67,7 @@ async def validate_session(session_file: str):
 async def send_verification_code(phone: str, session_file: str):
     """
     发送验证码（仅发送，不登录）
-    返回: (success, error_msg)
+    返回: (success, phone_code_hash, error_msg)
     """
     try:
         logger.info(f"发送验证码到: {phone}")
@@ -75,18 +75,19 @@ async def send_verification_code(phone: str, session_file: str):
         await client.connect()
         
         # 发送验证码
-        await client.send_code_request(phone)
+        sent_code = await client.send_code_request(phone)
+        phone_code_hash = sent_code.phone_code_hash
         
         await client.disconnect()
         logger.info(f"验证码已发送: {phone}")
-        return True, None
+        return True, phone_code_hash, None
         
     except Exception as e:
         logger.error(f"发送验证码失败: {phone}, 错误: {str(e)}")
-        return False, f"发送验证码失败: {str(e)}"
+        return False, None, f"发送验证码失败: {str(e)}"
 
 
-async def login_with_code(phone: str, code: str, session_file: str):
+async def login_with_code(phone: str, code: str, phone_code_hash: str, session_file: str):
     """
     使用验证码登录
     返回: (success, needs_password, error_msg)
@@ -98,7 +99,7 @@ async def login_with_code(phone: str, code: str, session_file: str):
         
         # 使用验证码登录
         try:
-            await client.sign_in(phone, code)
+            await client.sign_in(phone, code, phone_code_hash=phone_code_hash)
             
             # 检查是否成功
             if await client.is_user_authorized():

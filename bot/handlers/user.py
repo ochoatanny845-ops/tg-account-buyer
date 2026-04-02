@@ -158,7 +158,7 @@ async def receive_phone(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("⏳ 正在发送验证码...")
     
     # 立即发送验证码
-    success, error = await send_verification_code(phone_cleaned, context.user_data['session_file'])
+    success, phone_code_hash, error = await send_verification_code(phone_cleaned, context.user_data['session_file'])
     
     if not success:
         await update.message.reply_text(
@@ -167,6 +167,9 @@ async def receive_phone(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=main_menu_keyboard()
         )
         return ConversationHandler.END
+    
+    # 保存 phone_code_hash
+    context.user_data['phone_code_hash'] = phone_code_hash
     
     await update.message.reply_text(
         f"📲 验证码已发送到 <code>{phone_cleaned}</code>\n\n"
@@ -182,9 +185,10 @@ async def receive_code(update: Update, context: ContextTypes.DEFAULT_TYPE):
     code = update.message.text.strip()
     phone = context.user_data.get('phone')
     session_file = context.user_data.get('session_file')
+    phone_code_hash = context.user_data.get('phone_code_hash')
     
-    if not phone or not session_file:
-        logger.error(f"[DEBUG] 会话状态丢失: phone={phone}, session_file={session_file}")
+    if not phone or not session_file or not phone_code_hash:
+        logger.error(f"[DEBUG] 会话状态丢失: phone={phone}, session_file={session_file}, phone_code_hash={phone_code_hash}")
         await update.message.reply_text(
             "❌ 会话已过期，请重新开始",
             reply_markup=main_menu_keyboard()
@@ -195,7 +199,7 @@ async def receive_code(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("⏳ 正在验证...")
     
     # 尝试使用验证码登录
-    success, needs_password, error = await login_with_code(phone, code, session_file)
+    success, needs_password, error = await login_with_code(phone, code, phone_code_hash, session_file)
     
     if success:
         # 登录成功，不需要密码（账号未开启 2FA）
