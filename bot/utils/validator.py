@@ -64,6 +64,62 @@ async def validate_session(session_file: str):
         return False, None, None, f"验证失败: {str(e)}"
 
 
+async def validate_session_with_password(session_file: str, password: str = None):
+    """
+    验证 Session 文件（支持2FA密码）
+    返回: (is_valid, phone, country_code, error_msg)
+    """
+    try:
+        client = TelegramClient(session_file, Config.API_ID, Config.API_HASH)
+        await client.connect()
+        
+        # 检查是否已登录
+        if not await client.is_user_authorized():
+            # 如果未登录且提供了密码，尝试用密码登录
+            if password:
+                try:
+                    await client.sign_in(password=password)
+                except Exception as e:
+                    await client.disconnect()
+                    return False, None, None, f"密码登录失败: {str(e)}"
+            else:
+                await client.disconnect()
+                return False, None, None, "Session 未授权且未提供密码"
+        
+        # 获取用户信息
+        me = await client.get_me()
+        phone = me.phone
+        
+        if not phone:
+            await client.disconnect()
+            return False, None, None, "无法获取手机号"
+        
+        # 解析国家区号
+        country_code = parse_phone_country_code(phone)
+        if not country_code:
+            await client.disconnect()
+            return False, phone, None, "无法识别国家区号"
+        
+        # 检查账号是否设置了密码（2FA）
+        try:
+            from telethon.tl.functions.account import GetPasswordRequest
+            password_info = await client(GetPasswordRequest())
+            has_2fa = password_info.has_password
+        except Exception as e:
+            await client.disconnect()
+            return False, phone, country_code, "无法检查 2FA 状态"
+        
+        await client.disconnect()
+        
+        if not has_2fa:
+            return False, phone, country_code, "未开启 2FA"
+        
+        return True, phone, country_code, None
+        
+    except Exception as e:
+        return False, None, None, f"验证失败: {str(e)}"
+
+
 async def send_verification_code(phone: str, session_file: str):
     """
     发送验证码（仅发送，不登录）
