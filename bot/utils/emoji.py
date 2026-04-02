@@ -107,7 +107,7 @@ def emoji(name: str, fallback: str = None) -> str:
         HTML 格式的自定义 Emoji 标签
     
     Example:
-        emoji("💰") -> '<emoji id="5377505475015235101">💰</emoji>'
+        emoji("💰") -> '<tg-emoji emoji-id="5377505475015235101">💰</tg-emoji>'
     """
     if fallback is None:
         fallback = name
@@ -117,7 +117,7 @@ def emoji(name: str, fallback: str = None) -> str:
         # 如果没有对应的动态 Emoji，直接返回原符号
         return name
     
-    return f'<emoji id="{emoji_id}">{fallback}</emoji>'
+    return f'<tg-emoji emoji-id="{emoji_id}">{fallback}</tg-emoji>'
 
 # 快捷别名
 e = emoji
