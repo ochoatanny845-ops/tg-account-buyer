@@ -227,7 +227,7 @@ async def handle_withdrawal_confirm(update: Update, context: ContextTypes.DEFAUL
         
         # 通知管理员
         admin_text = f"""
-<emoji id="5233326571099534068">💸</emoji> <b>新的提现申请</b>
+<tg-emoji emoji-id="5233326571099534068">💸</tg-emoji> <b>新的提现申请</b>
 
 📋 <b>申请信息：</b>
 • 申请编号：<code>{withdrawal_id}</code>
@@ -240,7 +240,7 @@ async def handle_withdrawal_confirm(update: Update, context: ContextTypes.DEFAUL
 💳 <b>TRC20 地址：</b>
 <code>{user.trc20_address}</code>
 
-<emoji id="5447644880824181073">⚠️</emoji> 请手动转账后点击下方按钮确认
+<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> 请手动转账后点击下方按钮确认
 """
         
         keyboard = withdrawal_review_keyboard(withdrawal_id)
