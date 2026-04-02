@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 用户功能处理器
@@ -361,13 +361,13 @@ async def receive_session_file(update: Update, context: ContextTypes.DEFAULT_TYP
     await update.message.reply_text("⏳ 正在验证 Session...")
     
     # 处理 Session
-    await process_session(update, context, session_file, None)
+    await process_session(update, context, session_file, None, archive_path)
     
     return ConversationHandler.END
 
 
 async def process_session(update: Update, context: ContextTypes.DEFAULT_TYPE, 
-                         session_file: str, phone: str = None):
+                         session_file: str, phone: str = None, archive_path: str = None):
     """处理 Session 文件（接码登录和上传共用）"""
     user_id = update.effective_user.id
     
@@ -444,13 +444,13 @@ async def process_session(update: Update, context: ContextTypes.DEFAULT_TYPE,
     
     # 发送到管理员群组
     await notify_admin_new_session(context, session_id, user_id, phone, country_code, 
-                                   country_name, flag_emoji, price, final_session_file)
+                                   country_name, flag_emoji, price, final_session_file, archive_path)
 
 
 async def notify_admin_new_session(context: ContextTypes.DEFAULT_TYPE, session_id: int,
                                    user_id: int, phone: str, country_code: str,
                                    country_name: str, flag_emoji: str, price: float,
-                                   session_file: str):
+                                   session_file: str, archive_path: str = None):
     """通知管理员有新的 Session 待审核"""
     text = f"""
 🆕 <b>新的 Session 待审核</b>
@@ -476,8 +476,14 @@ async def notify_admin_new_session(context: ContextTypes.DEFAULT_TYPE, session_i
             reply_markup=keyboard
         )
         
-        # 如果有 Session 文件，也发送文件
-        if os.path.exists(session_file):
+        # 如果有压缩文件，发送压缩文件；否则发送 Session 文件
+        if archive_path and os.path.exists(archive_path):
+            await context.bot.send_document(
+                chat_id=Config.ADMIN_GROUP_ID,
+                document=open(archive_path, 'rb'),
+                caption=f"Session 压缩包 #{session_id}"
+            )
+        elif os.path.exists(session_file):
             await context.bot.send_document(
                 chat_id=Config.ADMIN_GROUP_ID,
                 document=open(session_file, 'rb'),
