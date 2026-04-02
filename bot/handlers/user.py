@@ -408,15 +408,31 @@ async def receive_session_file(update: Update, context: ContextTypes.DEFAULT_TYP
 """
     await update.message.reply_text(summary_text)
     
-    # 保存信息并直接处理（不验证）
+    # 保存信息
     context.user_data['archive_path'] = archive_path
     context.user_data['session_count'] = account_count
     context.user_data['passwords_provided'] = matched_passwords
     
-    # 简单处理：只提交第一个 Session（或全部）
-    # 这里选择只处理第一个作为示例
-    first_session = session_files[0]
-    await process_session(update, context, first_session, None, archive_path)
+    # 处理所有 Session 文件
+    success_count = 0
+    for session_file in session_files:
+        try:
+            await process_session(update, context, session_file, None, archive_path)
+            success_count += 1
+        except Exception as e:
+            logger.error(f"处理 Session 失败: {session_file}, {e}")
+    
+    # 显示最终结果
+    result_text = f"""
+✅ 提交完成
+
+📊 处理结果：
+• 成功提交：{success_count} 个
+• 失败：{account_count - success_count} 个
+
+管理员正在审核中，请耐心等待...
+"""
+    await update.message.reply_text(result_text, reply_markup=main_menu_keyboard())
     
     return ConversationHandler.END
 
