@@ -178,18 +178,20 @@ async def receive_phone(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def receive_code(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """接收验证码"""
+    logger.info(f"[DEBUG] receive_code 被调用，收到验证码")
     code = update.message.text.strip()
     phone = context.user_data.get('phone')
     session_file = context.user_data.get('session_file')
-    phone_code_hash = context.user_data.get('phone_code_hash')
     
-    if not phone or not session_file or not phone_code_hash:
+    if not phone or not session_file:
+        logger.error(f"[DEBUG] 会话状态丢失: phone={phone}, session_file={session_file}")
         await update.message.reply_text(
             "❌ 会话已过期，请重新开始",
             reply_markup=main_menu_keyboard()
         )
         return ConversationHandler.END
     
+    logger.info(f"[DEBUG] 准备登录: phone={phone}, code={code}")
     await update.message.reply_text("⏳ 正在验证...")
     
     # 尝试使用验证码登录
