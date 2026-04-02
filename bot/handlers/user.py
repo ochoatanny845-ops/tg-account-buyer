@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 用户功能处理器
@@ -115,6 +115,7 @@ TRC20 地址：<code>{user.trc20_address or '未设置'}</code>
 
 async def start_login(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """开始接码登录流程"""
+    logger.info(f"[DEBUG] start_login 被调用，用户ID: {update.effective_user.id}")
     await update.message.reply_text(
         "📱 <b>接码登录</b>\n\n"
         "请发送您的手机号（包含国家区号）\n"
@@ -131,6 +132,7 @@ async def start_login(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def receive_phone(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """接收手机号"""
+    logger.info(f"[DEBUG] receive_phone 被调用，收到文本: {update.message.text}")
     phone = update.message.text.strip()
     
     if phone == "❌ 取消":
@@ -709,44 +711,5 @@ TRC20 地址：<code>{user.trc20_address or '未设置'}</code>
 """
     
     await update.message.reply_text(text, parse_mode='HTML')
-
-
-async def start_login(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """开始接码登录流程"""
-    await update.message.reply_text(
-        "📱 <b>接码登录</b>\n\n"
-        "请发送您的手机号（包含国家区号）\n"
-        "例如：+86 13800138000\n\n"
-        "⚠️ <b>注意：</b>\n"
-        "• 账号必须已开启 2FA\n"
-        "• 登录后会生成 Session 文件\n"
-        "• 发送 /cancel 取消操作",
-        parse_mode='HTML',
-        reply_markup=cancel_keyboard()
-    )
-    return WAITING_PHONE
-
-
-async def receive_phone(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """接收手机号"""
-    phone = update.message.text.strip()
-    
-    if phone == "❌ 取消":
-        await update.message.reply_text(
-            "❌ 已取消操作",
-            reply_markup=main_menu_keyboard()
-        )
-        return ConversationHandler.END
-    
-    # 保存手机号
-    context.user_data['phone'] = phone
-    context.user_data['session_file'] = generate_session_filename(phone)
-    
-    await update.message.reply_text(
-        f"📲 已发送验证码到 <code>{phone}</code>\n\n"
-        f"请输入收到的验证码：",
-        parse_mode='HTML'
-    )
-    return WAITING_CODE
 
 
