@@ -15,18 +15,20 @@ from bot.database import Database
 from bot.keyboards.user_kb import main_menu_keyboard, cancel_keyboard, withdrawal_confirm_keyboard
 from bot.keyboards.admin_kb import session_review_keyboard
 from bot.utils.validator import (
-    validate_session, 
+    validate_session,
+    validate_session_with_password,
     send_verification_code,
     login_with_code,
     login_with_password,
     generate_session_filename
 )
 from bot.utils.country import get_country_info, format_price_list
+from bot.utils.emoji import emoji as e
 
 logger = logging.getLogger(__name__)
 
 # 会话状态
-WAITING_PHONE, WAITING_CODE, WAITING_PASSWORD, WAITING_SESSION_FILE, WAITING_TRC20, WAITING_AMOUNT = range(6)
+WAITING_PHONE, WAITING_CODE, WAITING_PASSWORD, WAITING_SESSION_FILE, WAITING_SESSION_PASSWORDS, WAITING_TRC20, WAITING_AMOUNT = range(7)
 
 # 初始化数据库
 db = Database(Config.DATABASE_URL)
